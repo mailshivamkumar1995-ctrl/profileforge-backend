@@ -1,4 +1,5 @@
 import logging
+import hashlib
 from decimal import Decimal
 from typing import Optional
 
@@ -37,7 +38,8 @@ class JobSearchService:
         is_syncing = False
         if q or city:
             from django.core.cache import cache
-            cache_key = f"job_sync_{q or 'Software'}_{city or 'India'}"
+            cache_key_raw = f"{q or 'Software'}_{city or 'India'}"
+            cache_key = f"job_sync_{hashlib.md5(cache_key_raw.encode()).hexdigest()}"
             if not cache.get(cache_key):
                 try:
                     from celery_app.tasks.career_hub_tasks import sync_jobs_task
