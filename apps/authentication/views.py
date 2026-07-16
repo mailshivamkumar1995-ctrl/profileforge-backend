@@ -162,10 +162,12 @@ class PasswordResetRequestView(SuccessResponseMixin, APIView):
 class PasswordResetConfirmView(SuccessResponseMixin, APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request, uidb64, token):
+    def post(self, request):
         serializer = PasswordResetConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         AuthService.confirm_password_reset(
-            uidb64, token, serializer.validated_data["new_password"]
+            serializer.validated_data["uid"],
+            serializer.validated_data["token"],
+            serializer.validated_data["new_password"],
         )
         return self.success_response(data={"message": "Password reset successful."})

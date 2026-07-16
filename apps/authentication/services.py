@@ -97,3 +97,53 @@ class AuthService:
             logger.warning("Failed to blacklist tokens after password change", exc_info=True)
 
         logger.info("Password changed", extra={"user_id": str(user.id)})
+    
+    @staticmethod
+    def request_password_reset(email: str) -> None:
+        """Send a password reset email if the account exists. No email enumeration —
+        always succeeds from the caller's perspective regardless of whether the
+        email matches a real account."""
+        from django.contrib.auth.tokens import default_token_generator
+        from django.core.mail import send_mail
+        from django.conf import settings
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            logger.info("Password reset requested for unknown email: %s", email)
+            return
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?uid={uid}&token={token}"
+
+        send_mail(
+            subject="Reset your ProfileForge password",
+            message=f"Click the link to reset your password: {reset_url}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=True,
+        )
+        logger.info("Password reset email sent to user_id=%s", user.pk)
+
+    @staticmethod
+    def confirm_password_reset(uid: str, token: str, new_password: str) -> None:
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.encoding import force_str
+        from django.utils.http import urlsafe_base64_decode
+        from core.exceptions import InvalidResetTokenException
+
+        try:
+            user_pk = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=user_pk)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            raise InvalidResetTokenException("Invalid or expired reset link.")
+
+        if not default_token_generator.check_token(user, token):
+            raise InvalidResetTokenException("Invalid or expired reset link.")
+
+        user.set_password(new_password)
+        user.save(update_fields=["password", "password_changed_at"])
+        logger.info("Password reset completed for user_id=%s", user.pk)
