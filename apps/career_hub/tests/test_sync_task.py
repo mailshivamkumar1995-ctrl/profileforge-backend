@@ -51,7 +51,7 @@ class TestSyncJobsTask:
             sync_jobs_task()
 
         mock_service_instance.sync.assert_called_once_with(
-            query="software engineer", city="Bangalore"
+            query="software engineer", city="Bangalore", max_pages=1
         )
 
     # TT-02
