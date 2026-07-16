@@ -65,10 +65,10 @@ class TestAuthContract:
     def test_register_returns_token_fields(self, api_client):
         response, _ = self._register(api_client)
         data = response.json()["data"]
-        assert "access_token" in data, "Missing access_token"
-        assert "refresh_token" in data, "Missing refresh_token"
-        assert isinstance(data["access_token"], str)
-        assert len(data["access_token"]) > 20
+        assert "access_token" in response.cookies, "Missing access_token cookie"
+        assert "refresh_token" in response.cookies, "Missing refresh_token cookie"
+        assert isinstance(response.cookies["access_token"].value, str)
+        assert len(response.cookies["access_token"].value) > 20
 
     def test_register_returns_user_object(self, api_client):
         response, payload = self._register(api_client)
@@ -90,7 +90,7 @@ class TestAuthContract:
             format="json",
         )
         body = assert_envelope(response)
-        assert "access_token" in body["data"]
+        assert "access_token" in response.cookies
 
     def test_error_response_envelope(self, api_client):
         response = api_client.post(

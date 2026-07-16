@@ -137,7 +137,7 @@ class TestPasswordChangeTokenInvalidation:
         """
         # Register and obtain initial token
         resp = api_client.post(self.register_url, user_payload, format="json")
-        old_access = resp.json()["data"]["access_token"]
+        old_access = resp.cookies["access_token"].value
 
         # Confirm token works before password change
         api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {old_access}")
@@ -159,7 +159,7 @@ class TestPasswordChangeTokenInvalidation:
     def test_new_token_after_password_change_is_valid(self, api_client, user_payload):
         """A token obtained after a password change must be accepted."""
         reg_resp = api_client.post(self.register_url, user_payload, format="json")
-        old_access = reg_resp.json()["data"]["access_token"]
+        old_access = reg_resp.cookies["access_token"].value
         api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {old_access}")
         time.sleep(1)
         api_client.post(
@@ -172,7 +172,7 @@ class TestPasswordChangeTokenInvalidation:
             {"email": "sectest@example.com", "password": "NewPass456!"},
             format="json",
         )
-        new_access = login_resp.json()["data"]["access_token"]
+        new_access = login_resp.cookies["access_token"].value
         api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {new_access}")
         assert api_client.get(self.me_url).status_code == status.HTTP_200_OK
 
