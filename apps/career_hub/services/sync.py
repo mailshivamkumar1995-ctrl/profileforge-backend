@@ -81,9 +81,7 @@ class JobSyncService:
                 errors += 1
 
         # COND-01: skip stale sweep when no jobs were successfully ingested
-        # COND-02: skip stale sweep if this is a targeted search (query or city provided)
-        is_targeted_search = bool(query) or bool(city)
-        sweep_eligible = pages_fetched >= 1 and jobs_seen >= 1 and not is_targeted_search
+        sweep_eligible = pages_fetched >= 1 and jobs_seen >= 1
         sweep_skipped = not sweep_eligible
 
         if sweep_skipped:
