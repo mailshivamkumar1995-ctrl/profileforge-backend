@@ -1,0 +1,357 @@
+﻿// ============================================================
+// ProfileForge Backend — Enterprise Jenkins Pipeline
+// ============================================================
+
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+                apiVersion: v1
+                kind: Pod
+                spec:
+                  containers:
+                  - name: python
+                    image: python:3.12-slim
+                    command: [cat]
+                    tty: true
+                  - name: docker
+                    image: docker:24-dind
+                    securityContext:
+                      privileged: true
+                    volumeMounts:
+                    - name: docker-sock
+                      mountPath: /var/run/docker.sock
+                  - name: trivy
+                    image: aquasec/trivy:latest
+                    command: [cat]
+                    tty: true
+                  - name: kubectl
+                    image: bitnami/kubectl:latest
+                    command: [cat]
+                    tty: true
+                  volumes:
+                  - name: docker-sock
+                    hostPath:
+                      path: /var/run/docker.sock
+            '''
+        }
+    }
+
+    environment {
+        REGISTRY = 'ghcr.io'
+        IMAGE_NAME = 'your-org/profileforge-backend'
+        DOCKER_IMAGE = "${REGISTRY}/${IMAGE_NAME}"
+        DJANGO_ENV = 'test'
+        DATABASE_URL = credentials('profileforge-test-db-url')
+        REDIS_URL = 'redis://redis:6379/0'
+        SECRET_KEY = credentials('profileforge-django-secret-key')
+        SONAR_TOKEN = credentials('sonarcloud-token')
+        REGISTRY_CREDENTIALS = credentials('ghcr-credentials')
+        ARGOCD_TOKEN = credentials('argocd-token')
+        SLACK_WEBHOOK = credentials('slack-webhook-url')
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        timeout(time: 45, unit: 'MINUTES')
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
+    stages {
+
+        stage('🔍 Checkout') {
+            steps {
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    env.BRANCH_NAME_CLEAN = env.BRANCH_NAME.replaceAll('/', '-').toLowerCase()
+                    env.IMAGE_TAG = "${env.BRANCH_NAME_CLEAN}-${env.GIT_COMMIT_SHORT}"
+                    currentBuild.displayName = "#${currentBuild.number} [${env.IMAGE_TAG}]"
+                }
+            }
+        }
+
+        stage('🔐 Secret Scan') {
+            steps {
+                container('python') {
+                    sh '''
+                        pip install gitleaks || true
+                        gitleaks detect --source . --report-format json --report-path gitleaks-report.json || true
+                    '''
+                    archiveArtifacts artifacts: 'gitleaks-report.json', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('📦 Install Dependencies') {
+            steps {
+                container('python') {
+                    sh '''
+                        apt-get update -q && apt-get install -y -q libpq-dev build-essential
+                        pip install --upgrade pip
+                        pip install -r requirements/development.txt
+                    '''
+                }
+            }
+        }
+
+        stage('🔍 Lint') {
+            parallel {
+                stage('Black') {
+                    steps {
+                        container('python') {
+                            sh 'black --check .'
+                        }
+                    }
+                }
+                stage('Flake8') {
+                    steps {
+                        container('python') {
+                            sh 'flake8 apps/ core/ --max-line-length=120 --statistics'
+                        }
+                    }
+                }
+                stage('isort') {
+                    steps {
+                        container('python') {
+                            sh 'isort --check-only .'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('🧪 Tests') {
+            steps {
+                container('python') {
+                    sh '''
+                        pytest \
+                            --cov=apps \
+                            --cov=core \
+                            --cov-report=xml:coverage.xml \
+                            --cov-report=html:htmlcov \
+                            --cov-fail-under=80 \
+                            --junitxml=test-results.xml \
+                            -v
+                    '''
+                }
+            }
+            post {
+                always {
+                    junit 'test-results.xml'
+                    publishHTML(target: [
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'htmlcov',
+                        reportFiles: 'index.html',
+                        reportName: 'Coverage Report'
+                    ])
+                }
+            }
+        }
+
+        stage('🔒 Security Scan') {
+            parallel {
+                stage('Bandit SAST') {
+                    steps {
+                        container('python') {
+                            sh '''
+                                pip install bandit
+                                bandit -r apps/ core/ \
+                                    -f json \
+                                    -o bandit-report.json \
+                                    -ll \
+                                    --exit-zero
+                            '''
+                            archiveArtifacts artifacts: 'bandit-report.json'
+                        }
+                    }
+                }
+                stage('Safety Dependency Scan') {
+                    steps {
+                        container('python') {
+                            sh 'pip install safety && safety check -r requirements/base.txt --full-report --output json > safety-report.json || true'
+                            archiveArtifacts artifacts: 'safety-report.json', allowEmptyArchive: true
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('🐳 Docker Build') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                    branch pattern: 'release/.*', comparator: 'REGEXP'
+                }
+            }
+            steps {
+                container('docker') {
+                    sh """
+                        docker build \
+                            --target production \
+                            --tag ${DOCKER_IMAGE}:${IMAGE_TAG} \
+                            --tag ${DOCKER_IMAGE}:latest \
+                            --build-arg BUILD_DATE=\$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+                            --build-arg VCS_REF=${GIT_COMMIT_SHORT} \
+                            --label org.opencontainers.image.revision=${GIT_COMMIT_SHORT} \
+                            .
+                    """
+                }
+            }
+        }
+
+        stage('🔎 Container Security Scan') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                }
+            }
+            steps {
+                container('trivy') {
+                    sh """
+                        trivy image \
+                            --exit-code 1 \
+                            --severity CRITICAL \
+                            --format sarif \
+                            --output trivy-critical.sarif \
+                            ${DOCKER_IMAGE}:${IMAGE_TAG}
+                    """
+                    sh """
+                        trivy image \
+                            --exit-code 0 \
+                            --severity HIGH \
+                            --format json \
+                            --output trivy-high.json \
+                            ${DOCKER_IMAGE}:${IMAGE_TAG}
+                    """
+                    archiveArtifacts artifacts: 'trivy-*.json,trivy-*.sarif', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('📤 Push Image') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                }
+            }
+            steps {
+                container('docker') {
+                    sh """
+                        echo ${REGISTRY_CREDENTIALS_PSW} | docker login ${REGISTRY} -u ${REGISTRY_CREDENTIALS_USR} --password-stdin
+                        docker push ${DOCKER_IMAGE}:${IMAGE_TAG}
+                        docker push ${DOCKER_IMAGE}:latest
+                    """
+                }
+            }
+        }
+
+        stage('🚀 Update Helm Values') {
+            when {
+                branch 'main'
+            }
+            steps {
+                container('kubectl') {
+                    sh """
+                        # Update image tag in Helm values to trigger ArgoCD sync
+                        git config user.email "jenkins@profileforge.io"
+                        git config user.name "Jenkins CI"
+                        sed -i 's|tag: .*|tag: "${IMAGE_TAG}"|' \\
+                            ../profileforge-infrastructure/helm/backend/values.production.yaml
+                        git add ../profileforge-infrastructure/helm/backend/values.production.yaml
+                        git commit -m "ci: update backend image to ${IMAGE_TAG} [skip ci]"
+                        git push
+                    """
+                }
+            }
+        }
+
+        stage('⏳ Wait for ArgoCD Sync') {
+            when {
+                branch 'main'
+            }
+            steps {
+                container('kubectl') {
+                    sh """
+                        # Wait for ArgoCD to sync and health to be Healthy
+                        for i in \$(seq 1 30); do
+                            STATUS=\$(argocd app get profileforge-backend \\
+                                --server argocd.profileforge.io \\
+                                --auth-token ${ARGOCD_TOKEN} \\
+                                --output json | jq -r '.status.sync.status')
+                            HEALTH=\$(argocd app get profileforge-backend \\
+                                --server argocd.profileforge.io \\
+                                --auth-token ${ARGOCD_TOKEN} \\
+                                --output json | jq -r '.status.health.status')
+                            echo "Sync: \${STATUS}, Health: \${HEALTH}"
+                            if [ "\${STATUS}" = "Synced" ] && [ "\${HEALTH}" = "Healthy" ]; then
+                                echo "Deployment successful!"
+                                exit 0
+                            fi
+                            sleep 20
+                        done
+                        echo "Deployment timed out!"
+                        exit 1
+                    """
+                }
+            }
+        }
+
+        stage('💨 Smoke Test') {
+            when {
+                branch 'main'
+            }
+            steps {
+                container('python') {
+                    sh '''
+                        pip install httpx
+                        python -c "
+import httpx
+import sys
+
+base = 'https://api.profileforge.io'
+checks = [
+    (f'{base}/health/live/', 200),
+    (f'{base}/health/ready/', 200),
+    (f'{base}/api/docs/', 200),
+]
+for url, expected in checks:
+    r = httpx.get(url, timeout=10, follow_redirects=True)
+    if r.status_code != expected:
+        print(f'FAIL: {url} returned {r.status_code}')
+        sys.exit(1)
+    print(f'OK: {url}')
+print('All smoke tests passed!')
+"
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            slackSend(
+                webhookUrl: env.SLACK_WEBHOOK,
+                color: 'good',
+                message: "✅ *${env.JOB_NAME}* #${env.BUILD_NUMBER} succeeded — `${env.IMAGE_TAG}` deployed to production"
+            )
+        }
+        failure {
+            slackSend(
+                webhookUrl: env.SLACK_WEBHOOK,
+                color: 'danger',
+                message: "❌ *${env.JOB_NAME}* #${env.BUILD_NUMBER} failed — <${env.BUILD_URL}|View details>"
+            )
+        }
+    }
+}

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ portfolio.seo.title }}</title>
+<meta name="description" content="{{ portfolio.seo.description }}">
+{% if portfolio.seo.keywords %}<meta name="keywords" content="{{ portfolio.seo.keywords }}">{% endif %}
+<link rel="canonical" href="{{ portfolio.seo.canonical_url }}">
+<meta property="og:title" content="{{ portfolio.seo.og_title }}">
+<meta property="og:description" content="{{ portfolio.seo.og_description }}">
+<meta property="og:type" content="profile">
+{% if portfolio.seo.og_image %}<meta property="og:image" content="{{ portfolio.seo.og_image }}">{% endif %}
+<meta name="twitter:card" content="{{ portfolio.seo.twitter_card }}">
+<script type="application/ld+json">{{ portfolio.seo.json_ld | tojson }}</script>
+{{ analytics_script | safe }}
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: #1a1a1a;
+    background: #fafafa;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 32px;
+    line-height: 1.75;
+  }
+  a { color: inherit; border-bottom: 1px solid #c4c4c4; text-decoration: none; transition: border-color 0.2s; }
+  a:hover { border-color: #1a1a1a; }
+  h1 { font-size: 2.5rem; font-weight: 400; letter-spacing: -0.5px; margin-bottom: 8px; }
+  h2 { font-size: 0.75rem; font-weight: 400; text-transform: uppercase; letter-spacing: 2px; color: #888; margin: 56px 0 24px; }
+  p { color: #444; margin-bottom: 16px; }
+  .headline { font-size: 1.15rem; color: #666; margin-bottom: 6px; }
+  .location { font-size: 0.9rem; color: #999; margin-bottom: 24px; }
+  .links-row { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 48px; font-size: 0.9rem; }
+  .links-row a { border-bottom-color: transparent; color: #888; }
+  .links-row a:hover { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+  hr { border: none; border-top: 1px solid #e5e5e5; margin: 40px 0; }
+
+  /* Experience */
+  .exp-item { margin-bottom: 32px; }
+  .exp-meta { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+  .exp-title { font-style: italic; }
+  .exp-date { font-size: 0.85rem; color: #999; }
+  .exp-company { font-size: 0.9rem; color: #666; margin-bottom: 8px; }
+  .exp-bullets { padding-left: 20px; color: #555; font-size: 0.95rem; }
+  .exp-bullets li { margin-bottom: 4px; }
+
+  /* Skills */
+  .skills-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .skill { font-size: 0.88rem; color: #555; border: 1px solid #ddd; padding: 3px 12px; border-radius: 2px; }
+
+  /* Projects */
+  .project-item { margin-bottom: 28px; }
+  .project-name { font-weight: 700; }
+  .project-desc { color: #555; font-size: 0.95rem; }
+  .project-tech { font-size: 0.8rem; color: #999; margin-top: 4px; }
+  .project-links-row { margin-top: 4px; font-size: 0.88rem; }
+
+  @media (prefers-color-scheme: dark) {
+    body { background: #111; color: #e5e5e5; }
+    h2 { color: #555; }
+    p, .exp-bullets, .project-desc { color: #aaa; }
+    .skill { border-color: #333; color: #aaa; }
+    a { border-bottom-color: #444; }
+    a:hover { border-bottom-color: #e5e5e5; }
+    hr { border-top-color: #222; }
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 40px 20px; }
+    h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+
+{% for section_key in ordered_sections %}
+  {% if sections[section_key].enabled %}
+
+    {% if section_key == 'hero' %}
+<h1>{{ profile.full_name }}</h1>
+{% if profile.headline %}<div class="headline">{{ profile.headline }}</div>{% endif %}
+{% if profile.location and profile.location.city %}<div class="location">{{ profile.location.city }}{% if profile.location.state %}, {{ profile.location.state }}{% endif %}</div>{% endif %}
+<div class="links-row">
+  <a href="mailto:{{ profile.email }}">Email</a>
+  {% if profile.linkedin_url %}<a href="{{ profile.linkedin_url }}" target="_blank" rel="noopener">LinkedIn</a>{% endif %}
+  {% if profile.github_url %}<a href="{{ profile.github_url }}" target="_blank" rel="noopener">GitHub</a>{% endif %}
+  {% if profile.website_url %}<a href="{{ profile.website_url }}" target="_blank" rel="noopener">Website</a>{% endif %}
+</div>
+
+    {% elif section_key == 'about' and profile.professional_summary %}
+<h2>About</h2>
+<p>{{ profile.professional_summary }}</p>
+
+    {% elif section_key == 'experience' and profile.work_experiences %}
+<h2>Experience</h2>
+{% for exp in profile.work_experiences %}
+<div class="exp-item">
+  <div class="exp-meta">
+    <span class="exp-title">{{ exp.job_title }}</span>
+    <span class="exp-date">{{ exp.start_date }} – {% if exp.is_current %}Present{% else %}{{ exp.end_date }}{% endif %}</span>
+  </div>
+  <div class="exp-company">{{ exp.company_name }}</div>
+  {% if exp.achievements %}
+  <ul class="exp-bullets">{% for b in exp.achievements %}<li>{{ b }}</li>{% endfor %}</ul>
+  {% endif %}
+</div>
+{% endfor %}
+
+    {% elif section_key == 'education' and profile.educations %}
+<h2>Education</h2>
+{% for edu in profile.educations %}
+<div style="margin-bottom:20px;">
+  <div>{{ edu.degree }}{% if edu.field_of_study %} · {{ edu.field_of_study }}{% endif %}</div>
+  <div style="font-size:0.9rem;color:#888;">{{ edu.institution }} · {{ edu.start_date }}–{{ edu.end_date }}</div>
+</div>
+{% endfor %}
+
+    {% elif section_key == 'skills' and profile.skills %}
+<h2>Skills</h2>
+<div class="skills-row">
+  {% for skill in profile.skills %}<span class="skill">{{ skill.name }}</span>{% endfor %}
+</div>
+
+    {% elif section_key == 'projects' and profile.projects %}
+<h2>Projects</h2>
+{% for proj in profile.projects %}
+<div class="project-item">
+  <div class="project-name">{{ proj.title }}</div>
+  {% if proj.description %}<div class="project-desc">{{ proj.description }}</div>{% endif %}
+  {% if proj.technologies %}<div class="project-tech">{{ proj.technologies | join(', ') }}</div>{% endif %}
+  <div class="project-links-row">
+    {% if proj.live_url %}<a href="{{ proj.live_url }}" target="_blank" rel="noopener">Live</a>{% endif %}
+    {% if proj.repo_url %} &nbsp;<a href="{{ proj.repo_url }}" target="_blank" rel="noopener">GitHub</a>{% endif %}
+  </div>
+</div>
+{% endfor %}
+
+    {% elif section_key == 'certifications' and profile.certifications %}
+<h2>Certifications</h2>
+{% for cert in profile.certifications %}
+<div style="margin-bottom:12px;font-size:0.95rem;">
+  {{ cert.name }} — <span style="color:#888;">{{ cert.issuing_organization }}</span>
+</div>
+{% endfor %}
+
+    {% elif section_key == 'achievements' and profile.achievements %}
+<h2>Achievements</h2>
+{% for ach in profile.achievements %}
+<div style="margin-bottom:12px;">
+  <strong>{{ ach.title }}</strong>{% if ach.issuer %} · {{ ach.issuer }}{% endif %}
+  {% if ach.description %}<div style="font-size:0.9rem;color:#888;">{{ ach.description }}</div>{% endif %}
+</div>
+{% endfor %}
+
+    {% elif section_key == 'contact' %}
+<h2>Contact</h2>
+<p>Reach me at <a href="mailto:{{ profile.email }}">{{ profile.email }}</a>{% if profile.phone %} or {{ profile.phone }}{% endif %}.</p>
+
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  /*
+   * ATS Clean — single-column, no tables, no columns, no graphics.
+   * Parsers can read every element left-to-right, top-to-bottom.
+   */
+  @page { margin: 0.45in 0.65in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Arial', 'Helvetica', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.3;
+    color: #000;
+    background: #fff;
+    max-width: 8.5in;
+  }
+  /* Screen preview: browsers ignore @page, so add padding here to simulate margins */
+  @media screen {
+    body { padding: 0.45in 0.65in; }
+  }
+  /* ── Header ── */
+  .name { font-size: 17pt; font-weight: 700; margin-bottom: 2px; }
+  .headline-text { font-size: 10.5pt; color: #333; margin-bottom: 3px; }
+  .contact-row { font-size: 9pt; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; width: 100%; }
+  .contact-spacer { flex: 1; }
+  .contact-item { display: inline-flex; align-items: center; gap: 4px; color: #222; text-decoration: none; white-space: nowrap; }
+  .contact-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+  .divider { border: none; border-top: 1px solid #000; margin: 3px 0 7px 0; }
+  /* ── Section headings ── */
+  h2 {
+    font-size: 10.5pt; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 4px; margin-top: 12px;
+    border-bottom: 1px solid #000; padding-bottom: 1px;
+  }
+  /* ── Summary ── */
+  .summary-text { font-size: 10pt; line-height: 1.45; }
+  /* ── Job ── */
+  .job { margin-bottom: 9px; }
+  .job-top { display: flex; justify-content: space-between; align-items: baseline; width: 100%; }
+  .job-title { font-weight: 700; font-size: 11pt; }
+  .job-date { font-size: 9pt; color: #555; }
+  .job-company { font-size: 9.5pt; color: #444; margin-top: 1px; }
+  ul.bullets { margin: 4px 0 0 14px; }
+  ul.bullets li { font-size: 9pt; margin-bottom: 2px; }
+  /* ── Education ── */
+  .edu { margin-bottom: 6px; }
+  .edu-top { display: flex; justify-content: space-between; align-items: baseline; width: 100%; }
+  .edu-degree { font-weight: 700; font-size: 10.5pt; }
+  .edu-date { font-size: 9pt; color: #555; }
+  .edu-school { font-size: 9.5pt; color: #444; margin-top: 1px; }
+  /* ── Skills ── */
+  .skills-block { margin-bottom: 4px; font-size: 9.5pt; display: flex; align-items: baseline; width: 100%; }
+  .skills-label { font-weight: 700; flex-shrink: 0; width: 100px; }
+  /* ── Projects ── */
+  .project { margin-bottom: 8px; }
+  .project-title { font-weight: 700; font-size: 10pt; }
+  .project-desc { font-size: 9.5pt; }
+  .project-tech { font-size: 9pt; color: #333; }
+  /* ── Certifications ── */
+  .cert { font-size: 9.5pt; margin-bottom: 3px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="name">{{ profile.full_name }}</div>
+{% if profile.headline %}<div class="headline-text">{{ profile.headline }}</div>{% endif %}
+<div class="contact-row">
+  {% if profile.email %}
+  <a class="contact-item" href="mailto:{{ profile.email }}">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#1D4ED8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>{{ profile.email }}
+  </a>
+  {% endif %}
+  {% if profile.phone %}
+  <a class="contact-item" href="tel:{{ profile.phone }}">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#1D4ED8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.48 2 2 0 0 1 3.6 1.28h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.18 6.18l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>{{ profile.phone }}
+  </a>
+  {% endif %}
+  {% if profile.location and profile.location.city %}
+  <span class="contact-item">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#1D4ED8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>{{ profile.location.city }}{% if profile.location.state %}, {{ profile.location.state }}{% endif %}
+  </span>
+  {% endif %}
+  {% if profile.linkedin_url or profile.github_url or profile.twitter_url or profile.website_url %}
+  <span class="contact-spacer"></span>
+  {% if profile.linkedin_url %}
+  <a class="contact-link" href="{{ profile.linkedin_url }}" title="LinkedIn" target="_blank" rel="noopener noreferrer">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+  </a>
+  {% endif %}
+  {% if profile.github_url %}
+  <a class="contact-link" href="{{ profile.github_url }}" title="GitHub" target="_blank" rel="noopener noreferrer">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#24292e"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+  </a>
+  {% endif %}
+  {% if profile.twitter_url %}
+  <a class="contact-link" href="{{ profile.twitter_url }}" title="X / Twitter" target="_blank" rel="noopener noreferrer">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="15" height="15" fill="#000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.261 5.632 5.903-5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+  </a>
+  {% endif %}
+  {% if profile.website_url %}
+  <a class="contact-link" href="{{ profile.website_url }}" title="Portfolio / Website" target="_blank" rel="noopener noreferrer">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#1D4ED8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+  </a>
+  {% endif %}
+  {% endif %}
+</div>
+<hr class="divider">
+
+<!-- Summary -->
+{% if profile.professional_summary %}
+<h2>Summary</h2>
+<p class="summary-text">{{ profile.professional_summary }}</p>
+{% endif %}
+
+<!-- Work Experience -->
+{% if profile.work_experiences %}
+<h2>Experience</h2>
+{% for job in profile.work_experiences %}
+<div class="job">
+  <div class="job-top">
+    <span class="job-title">{{ job.job_title }}</span>
+    <span class="job-date">
+      {{ job.start_date }}{% if job.is_current %} – Present{% elif job.end_date %} – {{ job.end_date }}{% endif %}
+    </span>
+  </div>
+  <div class="job-company">
+    {{ job.company_name }}{% if job.location and job.location.city %} | {{ job.location.city }}{% endif %}
+  </div>
+  {% if job.achievements %}
+  <ul class="bullets">
+    {% for bullet in job.achievements %}<li>{{ bullet }}</li>{% endfor %}
+  </ul>
+  {% elif job.description %}
+  <ul class="bullets">
+    {% for line in job.description | split_bullets %}{% if line.strip() %}<li>{{ line.strip() }}</li>{% endif %}{% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Education -->
+{% if profile.educations %}
+<h2>Education</h2>
+{% for edu in profile.educations %}
+<div class="edu">
+  <div class="edu-top">
+    <span class="edu-degree">{{ edu.degree }}{% if edu.field_of_study %} in {{ edu.field_of_study }}{% endif %}</span>
+    <span class="edu-date">{{ edu.start_date }}{% if edu.end_date %} – {{ edu.end_date }}{% endif %}</span>
+  </div>
+  <div class="edu-school">
+    {{ edu.institution }}{% if edu.gpa %} | GPA: {{ edu.gpa }}{% endif %}
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Skills -->
+{% if profile.skills %}
+<h2>Skills</h2>
+{% set categories = profile.skills | map(attribute='category') | unique | list %}
+{% for cat in categories %}
+  {% set cat_skills = profile.skills | selectattr('category', 'equalto', cat) | map(attribute='name') | list %}
+  <div class="skills-block">
+    <span class="skills-label">{{ cat | title | replace("_", " ") }}:</span>
+    {{ cat_skills | join(", ") }}
+  </div>
+{% endfor %}
+{% endif %}
+
+<!-- Projects -->
+{% if profile.projects %}
+<h2>Projects</h2>
+{% for project in profile.projects %}
+<div class="project">
+  <div class="project-title">
+    {{ project.title }}
+    {% if project.repo_url %} | {{ project.repo_url }}{% endif %}
+  </div>
+  {% if project.description %}<div class="project-desc">{{ project.description }}</div>{% endif %}
+  {% if project.technologies %}<div class="project-tech">Technologies: {{ project.technologies | join(", ") }}</div>{% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Certifications -->
+{% if profile.certifications %}
+<h2>Certifications</h2>
+{% for cert in profile.certifications %}
+<div class="cert">
+  <strong>{{ cert.name }}</strong> — {{ cert.issuing_organization }} ({{ cert.issue_date }})
+  {% if cert.credential_id %} | ID: {{ cert.credential_id }}{% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Achievements -->
+{% if profile.achievements %}
+<h2>Achievements & Awards</h2>
+{% for ach in profile.achievements %}
+<div class="cert">
+  <strong>{{ ach.title }}</strong>
+  {% if ach.issuer %} — {{ ach.issuer }}{% endif %}
+  {% if ach.date %} ({{ ach.date }}){% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Publications -->
+{% if profile.publications %}
+<h2>Publications</h2>
+{% for pub in profile.publications %}
+<div class="cert">
+  <strong>{{ pub.title }}</strong> — {{ pub.publisher }}
+  {% if pub.publication_date %} ({{ pub.publication_date }}){% endif %}
+  {% if pub.url %} | {{ pub.url }}{% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+</body>
+</html>

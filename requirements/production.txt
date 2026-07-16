@@ -1,0 +1,5 @@
+-r base.txt
+
+# Production monitoring
+ddtrace==2.11.1
+elastic-apm==6.23.0

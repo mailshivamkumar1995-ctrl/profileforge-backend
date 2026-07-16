@@ -1,0 +1,133 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "profileforge-backend"
+version = "1.1.0"
+description = "ProfileForge AI — Django REST API backend"
+requires-python = ">=3.12"
+
+# ─── Pytest ────────────────────────────────────────────────────────────────────
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "-ra",
+    "--no-header",
+]
+testpaths = ["apps", "tests", "core", "celery_app"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests requiring external services",
+    "unit: marks pure unit tests",
+    "api: marks API/endpoint tests",
+    "celery: marks tests that use Celery",
+    "ai: marks tests that call AI providers",
+    "contract: marks API contract tests",
+    "e2e: marks end-to-end tests",
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+# ─── Coverage ─────────────────────────────────────────────────────────────────
+
+[tool.coverage.run]
+source = ["apps", "core", "storage", "celery_app"]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/__init__.py",
+    "*/conftest.py",
+]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "@abstractmethod",
+]
+
+# ─── Ruff ─────────────────────────────────────────────────────────────────────
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = [".git", ".mypy_cache", ".ruff_cache", ".venv", "migrations", "__pycache__"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP", "N", "RUF"]
+ignore = ["S101", "B008", "N806", "RUF012"]
+
+[tool.ruff.lint.per-file-ignores]
+"*/tests/*.py" = ["B"]
+"*/migrations/*.py" = ["ALL"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "core", "celery_app", "storage"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# ─── Black ────────────────────────────────────────────────────────────────────
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    migrations
+  | .venv
+  | .git
+)/
+'''
+
+# ─── isort ────────────────────────────────────────────────────────────────────
+
+[tool.isort]
+profile = "black"
+line_length = 100
+known_django = ["django", "rest_framework", "drf_spectacular"]
+known_first_party = ["apps", "core", "storage", "celery_app", "config"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER"]
+
+# ─── Mypy ─────────────────────────────────────────────────────────────────────
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_return_any = true
+disallow_untyped_defs = true
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+[[tool.mypy.overrides]]
+module = "*.migrations.*"
+ignore_errors = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.development"
+
+# ─── Bandit ───────────────────────────────────────────────────────────────────
+
+[tool.bandit]
+targets = ["apps", "core", "storage", "celery_app"]
+skips = ["B101", "B601"]
+exclude_dirs = ["*/migrations", "*/tests"]

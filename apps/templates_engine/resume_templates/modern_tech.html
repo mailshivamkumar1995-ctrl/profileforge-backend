@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: letter; margin: 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.4;
+    color: #1f2937; /* Tailwind gray-800 */
+    background: #fff;
+  }
+  @media screen { body { padding: 0.5in; } }
+  
+  /* ── Header ── */
+  .header { border-left: 4px solid #111827; padding-left: 12px; margin-bottom: 16px; }
+  .header h1 { font-size: 22pt; font-weight: 800; letter-spacing: -0.5px; color: #111827; margin-bottom: 2px; }
+  .header .headline { font-size: 11pt; color: #4b5563; font-weight: 500; font-family: 'Consolas', 'Courier New', monospace; margin-bottom: 6px; }
+  .contact-line { font-size: 8.5pt; color: #6b7280; font-family: 'Consolas', 'Courier New', monospace; }
+  .contact-line a { color: #2563eb; text-decoration: none; }
+  .contact-line span { margin: 0 4px; color: #d1d5db; }
+  
+  /* ── Section ── */
+  .section { margin-bottom: 14px; }
+  .section-title {
+    font-size: 10pt; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: #111827;
+    margin-bottom: 6px; padding-bottom: 2px;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  
+  /* ── Summary ── */
+  .summary p { font-size: 9.5pt; color: #374151; }
+  
+  /* ── Skills (Monospace block) ── */
+  .skills-container { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px 10px; margin-bottom: 14px; }
+  .skill-group { margin-bottom: 4px; display: flex; align-items: baseline; }
+  .skill-group:last-child { margin-bottom: 0; }
+  .skill-group-name { font-weight: 700; font-size: 8pt; color: #111827; font-family: 'Consolas', monospace; width: 90px; flex-shrink: 0; }
+  .skill-tags { font-size: 8.5pt; color: #4b5563; font-family: 'Consolas', monospace; }
+  
+  /* ── Work Experience ── */
+  .job { margin-bottom: 10px; }
+  .job-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; width: 100%; }
+  .job-title { font-weight: 700; font-size: 10pt; color: #111827; }
+  .job-date { font-size: 8.5pt; color: #6b7280; font-family: 'Consolas', monospace; }
+  .job-company { font-size: 9.5pt; color: #2563eb; font-weight: 600; margin-bottom: 4px; }
+  .job-bullets { list-style-type: square; margin-top: 2px; padding-left: 14px; color: #374151; }
+  .job-bullets li { font-size: 9pt; margin-bottom: 2px; }
+  
+  /* ── Projects ── */
+  .project { margin-bottom: 10px; border-left: 2px solid #d1d5db; padding-left: 8px; }
+  .project-header { display: flex; justify-content: space-between; align-items: baseline; width: 100%; }
+  .project-title { font-weight: 700; font-size: 9.5pt; color: #111827; }
+  .project-links a { font-size: 8pt; color: #2563eb; text-decoration: none; margin-left: 6px; font-family: 'Consolas', monospace; }
+  .project-desc { font-size: 9pt; color: #374151; margin-top: 2px; }
+  .project-tech { font-size: 8pt; color: #4b5563; margin-top: 3px; font-family: 'Consolas', monospace; }
+  
+  /* ── Education ── */
+  .edu { margin-bottom: 8px; }
+  .edu-header { display: flex; justify-content: space-between; align-items: baseline; width: 100%; }
+  .edu-degree { font-weight: 700; font-size: 9.5pt; color: #111827; }
+  .edu-date { font-size: 8.5pt; color: #6b7280; font-family: 'Consolas', monospace; }
+  .edu-school { font-size: 9pt; color: #374151; margin-top: 1px; }
+  
+  /* ── Certifications ── */
+  .cert { margin-bottom: 4px; display: flex; justify-content: space-between; align-items: baseline; width: 100%; }
+  .cert-name { font-weight: 700; font-size: 9pt; color: #111827; }
+  .cert-org { font-size: 8.5pt; color: #4b5563; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>{{ profile.full_name }}</h1>
+  {% if profile.headline %}<div class="headline">>&nbsp;{{ profile.headline }}</div>{% endif %}
+  <div class="contact-line">
+    {% if profile.email %}{{ profile.email }}{% endif %}
+    {% if profile.phone %}<span>|</span>{{ profile.phone }}{% endif %}
+    {% if profile.location and profile.location.city %}
+      <span>|</span>{{ profile.location.city }}{% if profile.location.state %}, {{ profile.location.state }}{% endif %}
+    {% endif %}
+    {% if profile.linkedin_url %}<span>|</span><a href="{{ profile.linkedin_url }}">LinkedIn</a>{% endif %}
+    {% if profile.github_url %}<span>|</span><a href="{{ profile.github_url }}">GitHub</a>{% endif %}
+    {% if profile.website_url %}<span>|</span><a href="{{ profile.website_url }}">Portfolio</a>{% endif %}
+  </div>
+</div>
+
+{% if profile.professional_summary %}
+<div class="section summary">
+  <div class="section-title">Summary</div>
+  <p>{{ profile.professional_summary }}</p>
+</div>
+{% endif %}
+
+{% if profile.skills %}
+<div class="section">
+  <div class="section-title">Technical Skills</div>
+  <div class="skills-container">
+    {% set categories = profile.skills | map(attribute='category') | unique | list %}
+    {% for cat in categories %}
+      {% set cat_skills = profile.skills | selectattr('category', 'equalto', cat) | map(attribute='name') | list %}
+      <div class="skill-group">
+        <span class="skill-group-name">{{ cat | title | replace("_", " ") }}</span>
+        <span class="skill-tags">{{ cat_skills | join(", ") }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if profile.work_experiences %}
+<div class="section">
+  <div class="section-title">Experience</div>
+  {% for job in profile.work_experiences %}
+  <div class="job">
+    <div class="job-header">
+      <span class="job-title">{{ job.job_title }}</span>
+      <span class="job-date">
+        {{ job.start_date }}
+        {% if job.is_current %}– Present{% elif job.end_date %}– {{ job.end_date }}{% endif %}
+      </span>
+    </div>
+    <div class="job-company">{{ job.company_name }}{% if job.location and job.location.city %} · {{ job.location.city }}{% endif %}</div>
+    {% if job.achievements %}
+    <ul class="job-bullets">
+      {% for bullet in job.achievements %}<li>{{ bullet }}</li>{% endfor %}
+    </ul>
+    {% elif job.description %}
+    <ul class="job-bullets">
+      {% for line in job.description.splitlines() %}{% if line.strip() %}<li>{{ line.strip() }}</li>{% endif %}{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if profile.projects %}
+<div class="section">
+  <div class="section-title">Projects</div>
+  {% for project in profile.projects %}
+  <div class="project">
+    <div class="project-header">
+      <span class="project-title">{{ project.title }}</span>
+      <span class="project-links">
+        {% if project.repo_url %}<a href="{{ project.repo_url }}">[code]</a>{% endif %}
+        {% if project.live_url %}<a href="{{ project.live_url }}">[live]</a>{% endif %}
+      </span>
+    </div>
+    {% if project.description %}<div class="project-desc">{{ project.description }}</div>{% endif %}
+    {% if project.technologies %}<div class="project-tech">Tech: {{ project.technologies | join(", ") }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if profile.educations %}
+<div class="section">
+  <div class="section-title">Education</div>
+  {% for edu in profile.educations %}
+  <div class="edu">
+    <div class="edu-header">
+      <span class="edu-degree">{{ edu.degree }}{% if edu.field_of_study %} in {{ edu.field_of_study }}{% endif %}</span>
+      <span class="edu-date">{{ edu.start_date }}{% if edu.end_date %} – {{ edu.end_date }}{% endif %}</span>
+    </div>
+    <div class="edu-school">{{ edu.institution }}{% if edu.gpa %} | GPA {{ edu.gpa }}{% endif %}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if profile.certifications %}
+<div class="section">
+  <div class="section-title">Certifications</div>
+  {% for cert in profile.certifications %}
+  <div class="cert">
+    <span class="cert-name">{{ cert.name }}</span>
+    <span class="cert-org">{{ cert.issuing_organization }} {% if cert.issue_date %}({{ cert.issue_date }}){% endif %}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+</body>
+</html>

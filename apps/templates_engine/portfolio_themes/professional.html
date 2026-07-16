@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ portfolio.seo.title }}</title>
+<meta name="description" content="{{ portfolio.seo.description }}">
+{% if portfolio.seo.keywords %}<meta name="keywords" content="{{ portfolio.seo.keywords }}">{% endif %}
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="{{ portfolio.seo.canonical_url }}">
+<!-- Open Graph -->
+<meta property="og:title" content="{{ portfolio.seo.og_title }}">
+<meta property="og:description" content="{{ portfolio.seo.og_description }}">
+<meta property="og:type" content="profile">
+{% if portfolio.seo.og_image %}<meta property="og:image" content="{{ portfolio.seo.og_image }}">{% endif %}
+<!-- Twitter -->
+<meta name="twitter:card" content="{{ portfolio.seo.twitter_card }}">
+<meta name="twitter:title" content="{{ portfolio.seo.og_title }}">
+<meta name="twitter:description" content="{{ portfolio.seo.og_description }}">
+<!-- JSON-LD -->
+<script type="application/ld+json">{{ portfolio.seo.json_ld | tojson }}</script>
+<!-- Analytics -->
+{{ analytics_script | safe }}
+<style>
+  :root {
+    --primary: #1d4ed8;
+    --primary-dark: #1e40af;
+    --surface: #f8fafc;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --white: #ffffff;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: var(--text); background: var(--white); line-height: 1.6; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Nav */
+  nav { position: sticky; top: 0; background: var(--white); border-bottom: 1px solid var(--border); z-index: 100; }
+  .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .nav-name { font-weight: 700; font-size: 1rem; color: var(--text); }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a { font-size: 0.875rem; color: var(--text-muted); transition: color 0.2s; }
+  .nav-links a:hover { color: var(--primary); text-decoration: none; }
+
+  /* Sections */
+  section { padding: 80px 24px; }
+  .container { max-width: 960px; margin: 0 auto; }
+  h2.section-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 40px; color: var(--text); position: relative; }
+  h2.section-title::after { content: ''; display: block; width: 48px; height: 3px; background: var(--primary); margin-top: 10px; border-radius: 2px; }
+
+  /* Hero */
+  #hero { background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); color: #fff; padding: 100px 24px; text-align: center; }
+  #hero .name { font-size: 3rem; font-weight: 800; margin-bottom: 12px; }
+  #hero .headline { font-size: 1.25rem; opacity: 0.9; margin-bottom: 20px; }
+  #hero .location { font-size: 0.95rem; opacity: 0.75; margin-bottom: 28px; }
+  #hero .links { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  #hero .links a { background: rgba(255,255,255,0.15); color: #fff; padding: 8px 20px; border-radius: 100px; font-size: 0.875rem; border: 1px solid rgba(255,255,255,0.3); transition: background 0.2s; }
+  #hero .links a:hover { background: rgba(255,255,255,0.25); text-decoration: none; }
+
+  /* About */
+  #about { background: var(--surface); }
+  #about p { font-size: 1.05rem; color: var(--text-muted); max-width: 720px; line-height: 1.8; }
+
+  /* Experience */
+  .exp-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; background: var(--white); }
+  .exp-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .exp-role { font-weight: 700; font-size: 1.05rem; }
+  .exp-company { color: var(--primary); font-weight: 600; }
+  .exp-date { font-size: 0.85rem; color: var(--text-muted); }
+  .exp-bullets { margin-top: 12px; padding-left: 20px; }
+  .exp-bullets li { color: var(--text-muted); margin-bottom: 6px; font-size: 0.95rem; }
+
+  /* Education */
+  .edu-card { display: flex; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--border); }
+  .edu-card:last-child { border-bottom: none; }
+  .edu-body .degree { font-weight: 700; }
+  .edu-body .institution { color: var(--primary); }
+  .edu-body .dates { font-size: 0.85rem; color: var(--text-muted); }
+
+  /* Skills */
+  #skills { background: var(--surface); }
+  .skills-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .skill-badge { background: var(--white); border: 1px solid var(--border); color: var(--text); padding: 6px 14px; border-radius: 100px; font-size: 0.875rem; }
+
+  /* Projects */
+  .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+  .project-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; background: var(--white); transition: box-shadow 0.2s; }
+  .project-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .project-title { font-weight: 700; margin-bottom: 8px; }
+  .project-desc { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px; }
+  .project-links { display: flex; gap: 12px; font-size: 0.85rem; }
+  .project-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .project-tag { background: #eff6ff; color: var(--primary); padding: 2px 10px; border-radius: 100px; font-size: 0.78rem; }
+
+  /* Certifications */
+  #certifications { background: var(--surface); }
+  .cert-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .cert-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; background: var(--white); }
+  .cert-name { font-weight: 700; margin-bottom: 4px; }
+  .cert-org { font-size: 0.9rem; color: var(--primary); }
+  .cert-date { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+  /* Contact */
+  #contact { background: var(--text); color: #fff; text-align: center; }
+  #contact h2.section-title { color: #fff; }
+  #contact h2.section-title::after { background: #93c5fd; }
+  #contact p { color: #94a3b8; margin-bottom: 28px; font-size: 1.05rem; }
+  .contact-links { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .contact-links a { color: #93c5fd; font-size: 0.95rem; border: 1px solid #334155; padding: 8px 20px; border-radius: 100px; transition: border-color 0.2s; }
+  .contact-links a:hover { border-color: #93c5fd; text-decoration: none; }
+
+  /* Footer */
+  footer { text-align: center; padding: 24px; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border); }
+
+  @media (max-width: 640px) {
+    #hero .name { font-size: 2rem; }
+    .nav-links { display: none; }
+    .projects-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root { --surface: #1e293b; --border: #334155; --text: #f1f5f9; --text-muted: #94a3b8; --white: #0f172a; }
+    #hero { background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%); }
+    .skill-badge { background: #1e293b; }
+    .project-tag { background: #1e3a8a; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-inner">
+    <span class="nav-name">{{ profile.full_name }}</span>
+    <div class="nav-links">
+      {% for section_key in ordered_sections %}
+        {% if sections[section_key].enabled %}
+          {% if section_key == 'about' %}<a href="#about">About</a>
+          {% elif section_key == 'experience' %}<a href="#experience">Experience</a>
+          {% elif section_key == 'education' %}<a href="#education">Education</a>
+          {% elif section_key == 'skills' %}<a href="#skills">Skills</a>
+          {% elif section_key == 'projects' %}<a href="#projects">Projects</a>
+          {% elif section_key == 'certifications' %}<a href="#certifications">Certifications</a>
+          {% elif section_key == 'achievements' %}<a href="#achievements">Achievements</a>
+          {% elif section_key == 'publications' %}<a href="#publications">Publications</a>
+          {% elif section_key == 'contact' %}<a href="#contact">Contact</a>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</nav>
+
+{% for section_key in ordered_sections %}
+  {% if sections[section_key].enabled %}
+
+    {% if section_key == 'hero' %}
+<!-- Hero -->
+<section id="hero">
+  <div class="name">{{ profile.full_name }}</div>
+  {% if profile.headline %}<div class="headline">{{ profile.headline }}</div>{% endif %}
+  {% if profile.location and profile.location.city %}<div class="location">📍 {{ profile.location.city }}{% if profile.location.state %}, {{ profile.location.state }}{% endif %}</div>{% endif %}
+  <div class="links">
+    {% if profile.linkedin_url %}<a href="{{ profile.linkedin_url }}" target="_blank" rel="noopener">LinkedIn</a>{% endif %}
+    {% if profile.github_url %}<a href="{{ profile.github_url }}" target="_blank" rel="noopener">GitHub</a>{% endif %}
+    {% if profile.website_url %}<a href="{{ profile.website_url }}" target="_blank" rel="noopener">Website</a>{% endif %}
+    <a href="mailto:{{ profile.email }}">Email</a>
+  </div>
+</section>
+
+    {% elif section_key == 'about' and profile.professional_summary %}
+<!-- About -->
+<section id="about">
+  <div class="container">
+    <h2 class="section-title">About</h2>
+    <p>{{ profile.professional_summary }}</p>
+  </div>
+</section>
+
+    {% elif section_key == 'experience' and profile.work_experiences %}
+<!-- Experience -->
+<section id="experience">
+  <div class="container">
+    <h2 class="section-title">Experience</h2>
+    {% for exp in profile.work_experiences %}
+    <div class="exp-card">
+      <div class="exp-header">
+        <div>
+          <div class="exp-role">{{ exp.job_title }}</div>
+          <div class="exp-company">{{ exp.company_name }}</div>
+        </div>
+        <div class="exp-date">{{ exp.start_date }} — {% if exp.is_current %}Present{% else %}{{ exp.end_date }}{% endif %}</div>
+      </div>
+      {% if exp.achievements %}
+      <ul class="exp-bullets">
+        {% for bullet in exp.achievements %}<li>{{ bullet }}</li>{% endfor %}
+      </ul>
+      {% elif exp.description %}
+      <p style="color:var(--text-muted);margin-top:8px;font-size:0.95rem;">{{ exp.description }}</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+    {% elif section_key == 'education' and profile.educations %}
+<!-- Education -->
+<section id="education" style="background:var(--surface);">
+  <div class="container">
+    <h2 class="section-title">Education</h2>
+    {% for edu in profile.educations %}
+    <div class="edu-card">
+      <div class="edu-body">
+        <div class="degree">{{ edu.degree }}{% if edu.field_of_study %} in {{ edu.field_of_study }}{% endif %}</div>
+        <div class="institution">{{ edu.institution }}</div>
+        <div class="dates">{{ edu.start_date }} — {{ edu.end_date }}{% if edu.gpa %} · GPA {{ edu.gpa }}{% endif %}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+    {% elif section_key == 'skills' and profile.skills %}
+<!-- Skills -->
+<section id="skills">
+  <div class="container">
+    <h2 class="section-title">Skills</h2>
+    <div class="skills-grid">
+      {% for skill in profile.skills %}<span class="skill-badge">{{ skill.name }}</span>{% endfor %}
+    </div>
+  </div>
+</section>
+
+    {% elif section_key == 'projects' and profile.projects %}
+<!-- Projects -->
+<section id="projects">
+  <div class="container">
+    <h2 class="section-title">Projects</h2>
+    <div class="projects-grid">
+      {% for proj in profile.projects %}
+      <div class="project-card">
+        <div class="project-title">{{ proj.title }}</div>
+        {% if proj.description %}<div class="project-desc">{{ proj.description }}</div>{% endif %}
+        <div class="project-links">
+          {% if proj.live_url %}<a href="{{ proj.live_url }}" target="_blank" rel="noopener">Live →</a>{% endif %}
+          {% if proj.repo_url %}<a href="{{ proj.repo_url }}" target="_blank" rel="noopener">GitHub →</a>{% endif %}
+        </div>
+        {% if proj.technologies %}
+        <div class="project-tags">
+          {% for tech in proj.technologies %}<span class="project-tag">{{ tech }}</span>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+    {% elif section_key == 'certifications' and profile.certifications %}
+<!-- Certifications -->
+<section id="certifications">
+  <div class="container">
+    <h2 class="section-title">Certifications</h2>
+    <div class="cert-list">
+      {% for cert in profile.certifications %}
+      <div class="cert-card">
+        <div class="cert-name">{{ cert.name }}</div>
+        <div class="cert-org">{{ cert.issuing_organization }}</div>
+        {% if cert.issue_date %}<div class="cert-date">{{ cert.issue_date }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+    {% elif section_key == 'achievements' and profile.achievements %}
+<!-- Achievements -->
+<section id="achievements" style="background:var(--surface);">
+  <div class="container">
+    <h2 class="section-title">Achievements</h2>
+    {% for ach in profile.achievements %}
+    <div style="margin-bottom:16px;">
+      <div style="font-weight:700;">{{ ach.title }}</div>
+      {% if ach.issuer %}<div style="color:var(--primary);font-size:0.9rem;">{{ ach.issuer }}</div>{% endif %}
+      {% if ach.description %}<p style="color:var(--text-muted);font-size:0.9rem;margin-top:4px;">{{ ach.description }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+    {% elif section_key == 'publications' and profile.publications %}
+<!-- Publications -->
+<section id="publications">
+  <div class="container">
+    <h2 class="section-title">Publications</h2>
+    {% for pub in profile.publications %}
+    <div style="margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:20px;">
+      <div style="font-weight:700;">{% if pub.url %}<a href="{{ pub.url }}" target="_blank" rel="noopener">{{ pub.title }}</a>{% else %}{{ pub.title }}{% endif %}</div>
+      {% if pub.publisher %}<div style="color:var(--text-muted);font-size:0.9rem;">{{ pub.publisher }} · {{ pub.publication_date }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+    {% elif section_key == 'contact' %}
+<!-- Contact -->
+<section id="contact">
+  <div class="container">
+    <h2 class="section-title">Get In Touch</h2>
+    <p>I'm always open to new opportunities and conversations.</p>
+    <div class="contact-links">
+      <a href="mailto:{{ profile.email }}">{{ profile.email }}</a>
+      {% if profile.linkedin_url %}<a href="{{ profile.linkedin_url }}" target="_blank" rel="noopener">LinkedIn</a>{% endif %}
+      {% if profile.github_url %}<a href="{{ profile.github_url }}" target="_blank" rel="noopener">GitHub</a>{% endif %}
+      {% if profile.twitter_url %}<a href="{{ profile.twitter_url }}" target="_blank" rel="noopener">Twitter</a>{% endif %}
+    </div>
+  </div>
+</section>
+
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+<footer>
+  <p>© {{ profile.full_name }} · Built with ProfileForge</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: letter; margin: 0.6in 0.8in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Playfair Display', 'Georgia', serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    color: #2c2c2c;
+    background: #fff;
+  }
+  @media screen { body { padding: 0.6in 0.8in; } }
+  
+  /* ── Header ── */
+  .header { text-align: center; margin-bottom: 24px; }
+  .header h1 { font-size: 26pt; font-weight: 400; letter-spacing: 2px; color: #1a1a1a; margin-bottom: 4px; text-transform: uppercase; }
+  .header .headline { font-size: 11.5pt; color: #777; font-style: italic; margin-bottom: 8px; }
+  .contact-line { font-size: 8.5pt; color: #555; font-family: 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: 0.5px; }
+  .contact-line a { color: #555; text-decoration: none; border-bottom: 1px solid #ccc; }
+  .contact-line span { margin: 0 8px; color: #ccc; }
+  
+  /* ── Section ── */
+  .section { margin-bottom: 20px; }
+  .section-title {
+    font-size: 9.5pt; font-weight: 400; text-transform: uppercase;
+    letter-spacing: 2.5px; color: #999;
+    text-align: center;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .section-title::after {
+    content: ""; display: block; width: 30px; height: 1px; background: #ddd; margin: 6px auto 0;
+  }
+  
+  /* ── Summary ── */
+  .summary p { font-size: 10.5pt; color: #444; text-align: justify; line-height: 1.6; }
+  
+  /* ── Skills ── */
+  .skills-list { text-align: center; font-family: 'Helvetica Neue', Helvetica, sans-serif; font-size: 8.5pt; color: #555; line-height: 1.8; }
+  .skill-cat { font-weight: 600; color: #333; }
+  
+  /* ── Work Experience ── */
+  .job { margin-bottom: 14px; }
+  .job-header { text-align: center; margin-bottom: 4px; }
+  .job-title { font-weight: 600; font-size: 11pt; color: #222; }
+  .job-company { font-size: 10pt; color: #666; font-style: italic; }
+  .job-date { font-size: 8.5pt; color: #999; font-family: 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: 0.5px; margin-top: 2px; text-transform: uppercase; }
+  .job-bullets { list-style-type: none; margin-top: 8px; color: #444; }
+  .job-bullets li { font-size: 9.5pt; margin-bottom: 4px; position: relative; padding-left: 14px; }
+  .job-bullets li::before { content: "—"; position: absolute; left: 0; color: #aaa; font-size: 8pt; }
+  
+  /* ── Projects ── */
+  .project { margin-bottom: 12px; text-align: center; }
+  .project-title { font-weight: 600; font-size: 10.5pt; color: #222; }
+  .project-desc { font-size: 9.5pt; color: #444; margin-top: 4px; }
+  .project-tech { font-size: 8pt; color: #888; font-family: 'Helvetica Neue', Helvetica, sans-serif; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  
+  /* ── Education ── */
+  .edu { margin-bottom: 12px; text-align: center; }
+  .edu-degree { font-weight: 600; font-size: 10.5pt; color: #222; }
+  .edu-school { font-size: 10pt; color: #666; font-style: italic; }
+  .edu-date { font-size: 8.5pt; color: #999; font-family: 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: 0.5px; margin-top: 2px; text-transform: uppercase; }
+  
+  /* ── Certifications ── */
+  .cert { margin-bottom: 8px; text-align: center; }
+  .cert-name { font-weight: 600; font-size: 10pt; color: #222; }
+  .cert-org { font-size: 9pt; color: #666; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>{{ profile.full_name }}</h1>
+  {% if profile.headline %}<div class="headline">{{ profile.headline }}</div>{% endif %}
+  <div class="contact-line">
+    {% if profile.email %}<a href="mailto:{{ profile.email }}">{{ profile.email }}</a>{% endif %}
+    {% if profile.phone %}<span>|</span>{{ profile.phone }}{% endif %}
+    {% if profile.location and profile.location.city %}
+      <span>|</span>{{ profile.location.city }}{% if profile.location.state %}, {{ profile.location.state }}{% endif %}
+    {% endif %}
+    {% if profile.linkedin_url %}<span>|</span><a href="{{ profile.linkedin_url }}">LinkedIn</a>{% endif %}
+    {% if profile.github_url %}<span>|</span><a href="{{ profile.github_url }}">GitHub</a>{% endif %}
+    {% if profile.website_url %}<span>|</span><a href="{{ profile.website_url }}">Portfolio</a>{% endif %}
+  </div>
+</div>
+
+{% if profile.professional_summary %}
+<div class="section summary">
+  <div class="section-title">Profile</div>
+  <p>{{ profile.professional_summary }}</p>
+</div>
+{% endif %}
+
+{% if profile.skills %}
+<div class="section">
+  <div class="section-title">Expertise</div>
+  <div class="skills-list">
+    {% set categories = profile.skills | map(attribute='category') | unique | list %}
+    {% for cat in categories %}
+      {% set cat_skills = profile.skills | selectattr('category', 'equalto', cat) | map(attribute='name') | list %}
+      <span class="skill-cat">{{ cat | title | replace("_", " ") }}:</span>
+      {{ cat_skills | join(", ") }}<br>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if profile.work_experiences %}
+<div class="section">
+  <div class="section-title">Experience</div>
+  {% for job in profile.work_experiences %}
+  <div class="job">
+    <div class="job-header">
+      <div class="job-title">{{ job.job_title }}</div>
+      <div class="job-company">{{ job.company_name }}{% if job.location and job.location.city %}, {{ job.location.city }}{% endif %}</div>
+      <div class="job-date">
+        {{ job.start_date }}
+        {% if job.is_current %}– Present{% elif job.end_date %}– {{ job.end_date }}{% endif %}
+      </div>
+    </div>
+    {% if job.achievements %}
+    <ul class="job-bullets">
+      {% for bullet in job.achievements %}<li>{{ bullet }}</li>{% endfor %}
+    </ul>
+    {% elif job.description %}
+    <ul class="job-bullets">
+      {% for line in job.description.splitlines() %}{% if line.strip() %}<li>{{ line.strip() }}</li>{% endif %}{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if profile.projects %}
+<div class="section">
+  <div class="section-title">Projects</div>
+  {% for project in profile.projects %}
+  <div class="project">
+    <div class="project-title">{{ project.title }}</div>
+    {% if project.description %}<div class="project-desc">{{ project.description }}</div>{% endif %}
+    {% if project.technologies %}<div class="project-tech">{{ project.technologies | join(" · ") }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if profile.educations %}
+<div class="section">
+  <div class="section-title">Education</div>
+  {% for edu in profile.educations %}
+  <div class="edu">
+    <div class="edu-degree">{{ edu.degree }}{% if edu.field_of_study %} in {{ edu.field_of_study }}{% endif %}</div>
+    <div class="edu-school">{{ edu.institution }}{% if edu.gpa %} (GPA {{ edu.gpa }}){% endif %}</div>
+    <div class="edu-date">{{ edu.start_date }}{% if edu.end_date %} – {{ edu.end_date }}{% endif %}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if profile.certifications %}
+<div class="section">
+  <div class="section-title">Certifications</div>
+  {% for cert in profile.certifications %}
+  <div class="cert">
+    <div class="cert-name">{{ cert.name }}</div>
+    <div class="cert-org">{{ cert.issuing_organization }} {% if cert.issue_date %}· {{ cert.issue_date }}{% endif %}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  /*
+   * ATS Clean Portfolio — single-column, plain text, no graphics.
+   */
+  @page { margin: 0.5in 0.75in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Arial', 'Helvetica', sans-serif;
+    font-size: 11pt;
+    line-height: 1.4;
+    color: #000;
+    background: #fff;
+    max-width: 8.5in;
+  }
+  @media screen {
+    body { padding: 0.5in 0.75in; }
+  }
+  .name { font-size: 18pt; font-weight: 700; margin-bottom: 2px; }
+  .headline-text { font-size: 11pt; color: #333; margin-bottom: 4px; }
+  .contact-row { font-size: 9.5pt; margin-bottom: 10px; }
+  .divider { border: none; border-top: 1px solid #000; margin: 5px 0 10px 0; }
+  h2 {
+    font-size: 12pt; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 6px; margin-top: 16px;
+    border-bottom: 1px solid #000; padding-bottom: 2px;
+  }
+  .project { margin-bottom: 12px; }
+  .project-title { font-weight: 700; font-size: 11pt; }
+  .project-desc { font-size: 10.5pt; margin-top: 4px; }
+  .project-tech { font-size: 10pt; color: #444; margin-top: 4px; font-style: italic; }
+  .project-links { font-size: 10pt; margin-top: 2px; }
+  .project-links a { color: #000; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="name">{{ profile.full_name }}</div>
+{% if profile.headline %}<div class="headline-text">{{ profile.headline }}</div>{% endif %}
+<div class="contact-row">
+  {{ profile.email }} | {{ profile.phone }}
+  {% if profile.linkedin_url %} | {{ profile.linkedin_url }}{% endif %}
+  {% if profile.github_url %} | {{ profile.github_url }}{% endif %}
+</div>
+<hr class="divider">
+
+<!-- Summary -->
+{% if portfolio.about_text %}
+<h2>About</h2>
+<p class="summary-text">{{ portfolio.about_text }}</p>
+{% endif %}
+
+<!-- Projects -->
+{% if profile.projects %}
+<h2>Portfolio Projects</h2>
+{% for project in profile.projects %}
+<div class="project">
+  <div class="project-title">{{ project.title }}</div>
+  {% if project.role %}<div><strong>Role:</strong> {{ project.role }}</div>{% endif %}
+  {% if project.description %}<div class="project-desc">{{ project.description }}</div>{% endif %}
+  {% if project.technologies %}<div class="project-tech">Technologies used: {{ project.technologies | join(", ") }}</div>{% endif %}
+  <div class="project-links">
+    {% if project.repo_url %}Source: <a href="{{ project.repo_url }}">{{ project.repo_url }}</a><br>{% endif %}
+    {% if project.live_url %}Live: <a href="{{ project.live_url }}">{{ project.live_url }}</a>{% endif %}
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+
+</body>
+</html>
