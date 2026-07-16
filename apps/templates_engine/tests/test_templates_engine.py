@@ -11,7 +11,7 @@ BASE_URL = "/api/v1/templates/"
 def resume_template(db):
     from apps.templates_engine.models import Template
     t, _ = Template.objects.get_or_create(
-        slug="professional",
+        slug="professional-resume-test",
         defaults={
             "name": "Professional",
             "type": "resume",
