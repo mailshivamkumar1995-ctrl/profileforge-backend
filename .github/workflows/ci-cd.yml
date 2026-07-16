@@ -21,6 +21,7 @@ jobs:
 
     env:
       DJANGO_SETTINGS_MODULE: config.settings.test
+      SECRET_KEY: test-secret-key-not-for-production-use-only
 
     steps:
       - name: Checkout Repository
