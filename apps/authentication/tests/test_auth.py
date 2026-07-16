@@ -30,8 +30,8 @@ class TestRegister:
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
         assert data["success"] is True
-        assert "access_token" in data["data"]
-        assert "refresh_token" in data["data"]
+        assert "access_token" in response.cookies
+        assert "refresh_token" in response.cookies
         assert data["data"]["user"]["email"] == "test@example.com"
 
     def test_register_creates_profile(self, api_client, register_payload):
@@ -131,7 +131,8 @@ class TestLogin:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["success"] is True
-        assert "access_token" in data["data"]
+        assert "access_token" in response.cookies
+        assert "refresh_token" in response.cookies
 
     def test_login_wrong_password(self, api_client, register_payload):
         self._create_user(api_client, register_payload)
@@ -162,7 +163,7 @@ class TestMe:
 
     def test_me_returns_user(self, api_client, register_payload):
         reg_response = api_client.post(self.register_url, register_payload, format="json")
-        token = reg_response.json()["data"]["access_token"]
+        token = reg_response.cookies["access_token"].value
         api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
         response = api_client.get(self.me_url)
         assert response.status_code == status.HTTP_200_OK
@@ -177,9 +178,11 @@ class TestLogout:
     def test_logout_success(self, api_client, register_payload):
         reg_response = api_client.post(self.register_url, register_payload, format="json")
         tokens = reg_response.json()["data"]
-        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {tokens['access_token']}")
+        access_token = reg_response.cookies["access_token"].value
+        refresh_token = reg_response.cookies["refresh_token"].value
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}")
         response = api_client.post(
-            self.logout_url, {"refresh_token": tokens["refresh_token"]}, format="json"
+            self.logout_url, {"refresh_token": refresh_token}, format="json"
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
