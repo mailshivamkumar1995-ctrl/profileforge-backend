@@ -6,6 +6,13 @@ DEBUG = False
 # FINDING-012: assert DEBUG is never accidentally True in production
 assert not DEBUG, "DEBUG must be False in production"
 
+# FINDING: allow Prometheus's Pod-IP-based scrape requests to /metrics without
+# permanently widening ALLOWED_HOSTS — each Pod learns its own IP via the
+# Kubernetes Downward API and allows exactly that one value.
+POD_IP = config("POD_IP", default="")
+if POD_IP:
+    ALLOWED_HOSTS = ALLOWED_HOSTS + [POD_IP]
+
 # Security headers
 SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True

@@ -3,6 +3,13 @@ from decouple import config
 
 DEBUG = False
 
+# FINDING: allow Prometheus's Pod-IP-based scrape requests to /metrics without
+# permanently widening ALLOWED_HOSTS — each Pod learns its own IP via the
+# Kubernetes Downward API and allows exactly that one value.
+POD_IP = config("POD_IP", default="")
+if POD_IP:
+    ALLOWED_HOSTS = ALLOWED_HOSTS + [POD_IP]
+
 # Slightly relaxed security for staging (no HSTS preload)
 SECURE_HSTS_SECONDS = 3600
 SECURE_SSL_REDIRECT = True
