@@ -49,7 +49,7 @@ FROM dependencies AS production
 COPY . .
 
 # Collect static files
-RUN python manage.py collectstatic --noinput --settings=config.settings.production || true
+RUN SECRET_KEY=build-time-only-not-used-at-runtime python manage.py collectstatic --noinput --settings=config.settings.production
 
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
